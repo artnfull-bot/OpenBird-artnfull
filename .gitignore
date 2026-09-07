@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+
+# Virtual Environment
+duckenv/
+venv/
+.venv/
+env/
+
+# Logs & Mujoco
+*.log
+MUJOCO_LOG.TXT
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Recordings
+recordings/*.mp4
+recordings/*.avi
+recordings/*.png
+
+# ========================================================
+# 🔒 [절대 비공개 - GitHub 유출 원천 차단 방어막]
+# ========================================================
+# 1. 비공개 사업/기획 전략 문서
+*마이크로덕*.md
+*전략*.md
+*로드맵*.md
+*기획*.md
+*가이드*.md
+*secret*
+*confidential*
+
+# 2. 비공개 전용 폴더
+private_*/
+secret_*/
+hardware_cad/
+pcb_circuit/
+business_secret/
+
+# 3. 양산용 3D CAD 원본 및 회로 파일
+*.step
+*.stp
+*.iges
+*.sldprt
+*.sldasm
+*.f3d
+*.brd
+*.sch
+*.kicad_*
+*.gbr
+

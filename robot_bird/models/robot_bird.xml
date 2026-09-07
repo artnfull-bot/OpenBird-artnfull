@@ -1,0 +1,248 @@
+<mujoco model="bipedal_vtol_robot_bird">
+    <compiler angle="radian" coordinate="local" inertiafromgeom="true"/>
+    <option gravity="0 0 -9.81" timestep="0.002" integrator="RK4"/>
+
+    <default>
+        <joint damping="0.15" armature="0.02"/>
+        <geom friction="2.0 0.1 0.1" density="50" solref="0.01 1" solimp="0.90 0.95 0.001"/>
+        <position kp="350" kv="20" forcerange="-35 35"/>
+    </default>
+
+    <visual>
+        <headlight diffuse="0.65 0.65 0.65" ambient="0.45 0.45 0.45" specular="0.0 0.0 0.0"/>
+        <rgba haze="0.15 0.25 0.35 1"/>
+    </visual>
+
+    <asset>
+        <texture type="skybox" builtin="gradient" rgb1="0.5 0.7 0.9" rgb2="0.9 0.95 1.0" width="512" height="512"/>
+        <texture name="grid" type="2d" builtin="checker" width="512" height="512" rgb1="0.90 0.92 0.96" rgb2="0.55 0.62 0.72"/>
+        <material name="grid_mat" texture="grid" texrepeat="8 8" reflectance="0.05"/>
+        
+        <material name="body_white" rgba="0.96 0.96 0.98 1.0" specular="0.6" shininess="0.9"/>
+        <material name="body_accent" rgba="1.0 0.52 0.08 1.0" specular="0.7" shininess="0.8"/>
+        <material name="eye_black" rgba="0.05 0.05 0.08 1.0" specular="0.9" shininess="1.0"/>
+        <material name="eye_pupil" rgba="0.15 0.75 1.0 1.0" emission="0.6"/>
+        <material name="leg_metal" rgba="0.25 0.28 0.32 1.0" specular="0.8"/>
+        
+        <material name="duct_rim_cyan" rgba="0.12 0.62 0.88 1.0" specular="0.8" shininess="0.9"/>
+        <material name="mesh_grille" rgba="0.2 0.25 0.3 0.85" specular="0.7"/>
+        <material name="prop_carbon" rgba="0.1 0.1 0.12 1.0" specular="0.5"/>
+        <material name="spinner_gold" rgba="1.0 0.75 0.15 1.0" specular="0.9"/>
+    </asset>
+
+    <worldbody>
+        <light pos="0 -1 3.5" dir="0 0.3 -1" directional="true" castshadow="true"/>
+        <geom name="floor" type="plane" size="10 10 0.1" material="grid_mat" conaffinity="15" contype="15"/>
+
+        <!-- 🐦 로봇새 메인 바디 -->
+        <body name="torso" pos="0 0 0.14">
+            <freejoint name="root"/>
+            
+            <geom name="torso_sphere" type="sphere" size="0.065" mass="0.15" material="body_white"/>
+            <!-- 하단 배터리 저중심 웨이트 (등 뒤 프로펠러 모터의 무게를 상쇄하는 전방 카운터밸런스) -->
+            <geom name="battery_weight" type="box" size="0.025 0.025 0.012" pos="0 0.024 -0.025" mass="0.14" material="leg_metal"/>
+            
+            <!-- 🐦 독립 목/머리 피치 관절: 날개와 몸통은 수평 그대로 유지하고 머리(두 눈+부리+얼굴) 전체가 아래로 55° 쏙 숙여짐! -->
+            <body name="head" pos="0 0.035 0.008">
+                <joint name="neck_pitch" type="hinge" axis="1 0 0" range="-1.4 0.3" pos="0 0 0"/>
+                
+                <geom name="face_visor" type="capsule" fromto="-0.018 0.005 0 0.018 0.005 0" size="0.025" mass="0.005" material="body_white"/>
+                <geom name="left_eye" type="sphere" size="0.012" pos="0.022 0.020 0.007" mass="0.001" material="eye_black"/>
+                <geom name="left_pupil" type="sphere" size="0.005" pos="0.022 0.025 0.009" mass="0.001" material="eye_pupil"/>
+                <geom name="right_eye" type="sphere" size="0.012" pos="-0.022 0.020 0.007" mass="0.001" material="eye_black"/>
+                <geom name="right_pupil" type="sphere" size="0.005" pos="-0.022 0.025 0.009" mass="0.001" material="eye_pupil"/>
+                <geom name="beak" type="ellipsoid" size="0.015 0.016 0.007" pos="0 0.025 -0.013" mass="0.002" material="body_accent"/>
+
+                <!-- 📷 머리에 고정된 1인칭 카메라 3개 (하방 55° 스캔 시에도 몸통 간섭 없이 맑고 시원한 시야) -->
+                <camera name="head_fpv_cam" pos="0 0.055 0.025" fovy="85" mode="fixed" xyaxes="1 0 0 0 0 1"/>
+                <camera name="left_eye_cam" pos="0.022 0.050 0.025" fovy="85" mode="fixed" xyaxes="1 0 0 0 0 1"/>
+                <camera name="right_eye_cam" pos="-0.022 0.050 0.025" fovy="85" mode="fixed" xyaxes="1 0 0 0 0 1"/>
+            </body>
+
+            <!-- ========================================================================================= -->
+            <!-- 🪽 좌측 날개: Z축(수평) 회전 힌지                                                          -->
+            <!-- 0 rad: 등 뒤(-Y)로 쏙 포개짐                                                               -->
+            <!-- +1.57 rad: 좌측(+X)으로 180° 수평으로 쫙 펼쳐짐!                                           -->
+            <!-- ========================================================================================= -->
+            <body name="left_wing_base" pos="0.045 0 0.01">
+                <joint name="left_wing_fold" type="hinge" axis="0 0 1" range="-0.2 1.8" pos="0 0 0"/>
+                <geom name="left_wing_arm" type="capsule" fromto="0 0 0 0 -0.075 0" size="0.007" mass="0.003" material="body_accent"/>
+
+                <body name="left_rotor_tilt" pos="0 -0.075 0">
+                    <joint name="left_tilt" type="hinge" axis="1 0 0" range="-0.5 2.0" pos="0 0 0"/>
+                    
+                    <!-- 🛞 속이 뻥 뚫린 아름다운 원형 덕트 림 (Duct Guard Ring) -->
+                    <geom name="l_ring_0" type="capsule" fromto="0.0460 0.0000 0 0.0398 0.0230 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_1" type="capsule" fromto="0.0398 0.0230 0 0.0230 0.0398 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_2" type="capsule" fromto="0.0230 0.0398 0 0.0000 0.0460 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_3" type="capsule" fromto="0.0000 0.0460 0 -0.0230 0.0398 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_4" type="capsule" fromto="-0.0230 0.0398 0 -0.0398 0.0230 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_5" type="capsule" fromto="-0.0398 0.0230 0 -0.0460 0.0000 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_6" type="capsule" fromto="-0.0460 0.0000 0 -0.0398 -0.0230 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_7" type="capsule" fromto="-0.0398 -0.0230 0 -0.0230 -0.0398 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_8" type="capsule" fromto="-0.0230 -0.0398 0 0.0000 -0.0460 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_9" type="capsule" fromto="0.0000 -0.0460 0 0.0230 -0.0398 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_10" type="capsule" fromto="0.0230 -0.0398 0 0.0398 -0.0230 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="l_ring_11" type="capsule" fromto="0.0398 -0.0230 0 0.0460 0.0000 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+
+                    <!-- 하단 모터 마운트 지지 스포크 -->
+                    <geom name="l_spoke_1" type="capsule" fromto="-0.044 0 -0.005 0.044 0 -0.005" size="0.0015" mass="0.0002" material="leg_metal"/>
+                    <geom name="l_spoke_2" type="capsule" fromto="0 -0.044 -0.005 0 0.044 -0.005" size="0.0015" mass="0.0002" material="leg_metal"/>
+
+                    <!-- 중앙 모터 허브 스피너 -->
+                    <geom name="left_spinner" type="sphere" size="0.010" pos="0 0 0" mass="0.001" material="spinner_gold"/>
+
+                    <!-- 🌪️ 3엽 다이내믹 고속 회전 프로펠러 (눈에 확실히 보이는 컬러 팁 장착) -->
+                    <body name="left_propeller" pos="0 0 0.003">
+                        <joint name="left_prop_spin" type="hinge" axis="0 0 1" damping="0.0005"/>
+                        <!-- 120도 간격 3엽 블레이드 -->
+                        <geom name="l_b1" type="capsule" fromto="0 0 0 0.041 0 0" size="0.0045" mass="0.0005" material="prop_carbon"/>
+                        <geom name="l_b1_tip" type="sphere" size="0.006" pos="0.041 0 0" mass="0.0001" material="body_accent"/>
+                        
+                        <geom name="l_b2" type="capsule" fromto="0 0 0 -0.0205 0.0355 0" size="0.0045" mass="0.0005" material="prop_carbon"/>
+                        <geom name="l_b2_tip" type="sphere" size="0.006" pos="-0.0205 0.0355 0" mass="0.0001" material="body_accent"/>
+                        
+                        <geom name="l_b3" type="capsule" fromto="0 0 0 -0.0205 -0.0355 0" size="0.0045" mass="0.0005" material="prop_carbon"/>
+                        <geom name="l_b3_tip" type="sphere" size="0.006" pos="-0.0205 -0.0355 0" mass="0.0001" material="body_accent"/>
+                    </body>
+                </body>
+            </body>
+
+            <!-- ========================================================================================= -->
+            <!-- 🪽 우측 날개: Z축(수평) 회전 힌지                                                          -->
+            <!-- 0 rad: 등 뒤(-Y)로 쏙 포개짐 (좌측 덕트와 포개짐)                                           -->
+            <!-- -1.57 rad: 우측(-X)으로 180° 수평으로 쫙 펼쳐짐!                                           -->
+            <!-- ========================================================================================= -->
+            <body name="right_wing_base" pos="-0.045 0 0.01">
+                <joint name="right_wing_fold" type="hinge" axis="0 0 1" range="-1.8 0.2" pos="0 0 0"/>
+                <geom name="right_wing_arm" type="capsule" fromto="0 0 0 0 -0.075 0" size="0.007" mass="0.003" material="body_accent"/>
+
+                <body name="right_rotor_tilt" pos="0 -0.075 0">
+                    <joint name="right_tilt" type="hinge" axis="1 0 0" range="-0.5 2.0" pos="0 0 0"/>
+                    
+                    <!-- 🛞 속이 뻥 뚫린 아름다운 원형 덕트 림 (Duct Guard Ring) -->
+                    <geom name="r_ring_0" type="capsule" fromto="0.0460 0.0000 0 0.0398 0.0230 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_1" type="capsule" fromto="0.0398 0.0230 0 0.0230 0.0398 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_2" type="capsule" fromto="0.0230 0.0398 0 0.0000 0.0460 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_3" type="capsule" fromto="0.0000 0.0460 0 -0.0230 0.0398 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_4" type="capsule" fromto="-0.0230 0.0398 0 -0.0398 0.0230 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_5" type="capsule" fromto="-0.0398 0.0230 0 -0.0460 0.0000 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_6" type="capsule" fromto="-0.0460 0.0000 0 -0.0398 -0.0230 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_7" type="capsule" fromto="-0.0398 -0.0230 0 -0.0230 -0.0398 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_8" type="capsule" fromto="-0.0230 -0.0398 0 0.0000 -0.0460 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_9" type="capsule" fromto="0.0000 -0.0460 0 0.0230 -0.0398 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_10" type="capsule" fromto="0.0230 -0.0398 0 0.0398 -0.0230 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+                    <geom name="r_ring_11" type="capsule" fromto="0.0398 -0.0230 0 0.0460 0.0000 0" size="0.0035" mass="0.0004" material="duct_rim_cyan"/>
+
+                    <!-- 하단 모터 마운트 지지 스포크 -->
+                    <geom name="r_spoke_1" type="capsule" fromto="-0.044 0 -0.005 0.044 0 -0.005" size="0.0015" mass="0.0002" material="leg_metal"/>
+                    <geom name="r_spoke_2" type="capsule" fromto="0 -0.044 -0.005 0 0.044 -0.005" size="0.0015" mass="0.0002" material="leg_metal"/>
+
+                    <!-- 중앙 모터 허브 스피너 -->
+                    <geom name="right_spinner" type="sphere" size="0.010" pos="0 0 0" mass="0.001" material="spinner_gold"/>
+
+                    <!-- 🌪️ 3엽 다이내믹 고속 회전 프로펠러 (눈에 확실히 보이는 컬러 팁 장착) -->
+                    <body name="right_propeller" pos="0 0 0.003">
+                        <joint name="right_prop_spin" type="hinge" axis="0 0 1" damping="0.0005"/>
+                        <!-- 120도 간격 3엽 블레이드 -->
+                        <geom name="r_b1" type="capsule" fromto="0 0 0 0.041 0 0" size="0.0045" mass="0.0005" material="prop_carbon"/>
+                        <geom name="r_b1_tip" type="sphere" size="0.006" pos="0.041 0 0" mass="0.0001" material="body_accent"/>
+                        
+                        <geom name="r_b2" type="capsule" fromto="0 0 0 -0.0205 0.0355 0" size="0.0045" mass="0.0005" material="prop_carbon"/>
+                        <geom name="r_b2_tip" type="sphere" size="0.006" pos="-0.0205 0.0355 0" mass="0.0001" material="body_accent"/>
+                        
+                        <geom name="r_b3" type="capsule" fromto="0 0 0 -0.0205 -0.0355 0" size="0.0045" mass="0.0005" material="prop_carbon"/>
+                        <geom name="r_b3_tip" type="sphere" size="0.006" pos="-0.0205 -0.0355 0" mass="0.0001" material="body_accent"/>
+                    </body>
+                </body>
+            </body>
+
+            <!-- ==================== 🦵 좌측 2족 보행 다리 (디즈니/BDX 스타일 역관절 + 화이트 아머 + 투톤 슈즈) ==================== -->
+            <body name="left_hip" pos="0.032 0.010 -0.035">
+                <joint name="left_hip_pitch" type="hinge" axis="1 0 0" range="-1.8 1.8" pos="0 0 0"/>
+                <!-- 메인 허벅지 프레임 + 외측 화이트 아머 커버 (사진 1, 2, 3) -->
+                <geom name="left_thigh" type="capsule" fromto="0 0 0 0 -0.030 -0.030" size="0.008" mass="0.008" material="leg_metal"/>
+                <geom name="left_thigh_armor" type="capsule" fromto="0.010 0 0 0.010 -0.030 -0.030" size="0.011" mass="0.004" material="body_white"/>
+
+                <body name="left_knee" pos="0 -0.030 -0.030">
+                    <joint name="left_knee_pitch" type="hinge" axis="1 0 0" range="-2.2 2.2" pos="0 0 0"/>
+                    <geom name="left_knee_hub" type="cylinder" size="0.008 0.012" pos="0 0 0" quat="0.707 0 0.707 0" mass="0.002" material="spinner_gold"/>
+                    <geom name="left_shin" type="capsule" fromto="0 0 0 0 0.030 -0.042" size="0.008" mass="0.008" material="leg_metal"/>
+                    <geom name="left_shin_brace" type="capsule" fromto="0.008 0.005 -0.005 0.008 0.025 -0.035" size="0.004" mass="0.002" material="body_white"/>
+
+                    <!-- 👟 입체형 2단 투톤 컬러 슈즈 (오렌지 U-브래킷 + 민트/시안 라운드 러버솔) -->
+                    <body name="left_foot" pos="0 0.030 -0.042">
+                        <joint name="left_ankle_pitch" type="hinge" axis="1 0 0" range="-1.5 1.5" pos="0 0 0"/>
+                        
+                        <!-- 1. 발목 피벗 모터/베어링 골드 디스크 (사진 속 원형 축) -->
+                        <geom name="left_ankle_hub" type="cylinder" size="0.008 0.015" pos="0 0 0" quat="0.707 0 0.707 0" mass="0.003" material="spinner_gold"/>
+                        
+                        <!-- 2. 상단 오렌지/옐로우 U자형 발목 브래킷 (사진 1, 2, 3 U자 컵) -->
+                        <geom name="left_ankle_bracket" type="capsule" fromto="0 -0.004 0.006 0 0.010 -0.004" size="0.011" mass="0.008" material="body_accent"/>
+                        <geom name="left_shoe_top" type="box" size="0.018 0.026 0.004" pos="0 -0.002 -0.004" mass="0.01" material="body_accent"/>
+                        
+                        <!-- 3. 하단 민트/시안 라운드 롤러 러버솔 (뒤꿈치를 2.8cm로 확장하여 후진 보행 완벽 지지) -->
+                        <geom name="left_sole_heel" type="capsule" fromto="-0.014 -0.028 -0.008 0.014 -0.028 -0.008" size="0.006" mass="0.006" friction="3.0 0.1 0.1" material="duct_rim_cyan"/>
+                        <geom name="left_sole_toe" type="capsule" fromto="-0.014 0.022 -0.008 0.014 0.022 -0.008" size="0.006" mass="0.005" friction="3.0 0.1 0.1" material="duct_rim_cyan"/>
+                        <geom name="left_sole_base" type="box" size="0.017 0.024 0.004" pos="0 -0.003 -0.008" mass="0.01" friction="3.0 0.1 0.1" material="duct_rim_cyan"/>
+                    </body>
+                </body>
+            </body>
+
+            <!-- ==================== 🦵 우측 2족 보행 다리 (디즈니/BDX 스타일 역관절 + 화이트 아머 + 투톤 슈즈) ==================== -->
+            <body name="right_hip" pos="-0.032 0.010 -0.035">
+                <joint name="right_hip_pitch" type="hinge" axis="1 0 0" range="-1.8 1.8" pos="0 0 0"/>
+                <!-- 메인 허벅지 프레임 + 외측 화이트 아머 커버 (사진 1, 2, 3) -->
+                <geom name="right_thigh" type="capsule" fromto="0 0 0 0 -0.030 -0.030" size="0.008" mass="0.008" material="leg_metal"/>
+                <geom name="right_thigh_armor" type="capsule" fromto="-0.010 0 0 -0.010 -0.030 -0.030" size="0.011" mass="0.004" material="body_white"/>
+
+                <body name="right_knee" pos="0 -0.030 -0.030">
+                    <joint name="right_knee_pitch" type="hinge" axis="1 0 0" range="-2.2 2.2" pos="0 0 0"/>
+                    <geom name="right_knee_hub" type="cylinder" size="0.008 0.012" pos="0 0 0" quat="0.707 0 0.707 0" mass="0.002" material="spinner_gold"/>
+                    <geom name="right_shin" type="capsule" fromto="0 0 0 0 0.030 -0.042" size="0.008" mass="0.008" material="leg_metal"/>
+                    <geom name="right_shin_brace" type="capsule" fromto="-0.008 0.005 -0.005 -0.008 0.025 -0.035" size="0.004" mass="0.002" material="body_white"/>
+
+                    <!-- 👟 입체형 2단 투톤 컬러 슈즈 (오렌지 U-브래킷 + 민트/시안 라운드 러버솔) -->
+                    <body name="right_foot" pos="0 0.030 -0.042">
+                        <joint name="right_ankle_pitch" type="hinge" axis="1 0 0" range="-1.5 1.5" pos="0 0 0"/>
+                        
+                        <!-- 1. 발목 피벗 모터/베어링 골드 디스크 (사진 속 원형 축) -->
+                        <geom name="right_ankle_hub" type="cylinder" size="0.008 0.015" pos="0 0 0" quat="0.707 0 0.707 0" mass="0.003" material="spinner_gold"/>
+                        
+                        <!-- 2. 상단 오렌지/옐로우 U자형 발목 브래킷 (사진 1, 2, 3 U자 컵) -->
+                        <geom name="right_ankle_bracket" type="capsule" fromto="0 -0.004 0.006 0 0.010 -0.004" size="0.011" mass="0.008" material="body_accent"/>
+                        <geom name="right_shoe_top" type="box" size="0.018 0.026 0.004" pos="0 -0.002 -0.004" mass="0.01" material="body_accent"/>
+                        
+                        <!-- 3. 하단 민트/시안 라운드 롤러 러버솔 (뒤꿈치를 2.8cm로 확장하여 후진 보행 완벽 지지) -->
+                        <geom name="right_sole_heel" type="capsule" fromto="-0.014 -0.028 -0.008 0.014 -0.028 -0.008" size="0.006" mass="0.006" friction="3.0 0.1 0.1" material="duct_rim_cyan"/>
+                        <geom name="right_sole_toe" type="capsule" fromto="-0.014 0.022 -0.008 0.014 0.022 -0.008" size="0.006" mass="0.005" friction="3.0 0.1 0.1" material="duct_rim_cyan"/>
+                        <geom name="right_sole_base" type="box" size="0.017 0.024 0.004" pos="0 -0.003 -0.008" mass="0.01" friction="3.0 0.1 0.1" material="duct_rim_cyan"/>
+                    </body>
+                </body>
+            </body>
+
+        </body>
+    </worldbody>
+
+    <!-- 액추에이터 -->
+    <actuator>
+        <position name="act_l_hip" joint="left_hip_pitch" ctrlrange="-1.8 1.8" kp="500" kv="30"/>
+        <position name="act_l_knee" joint="left_knee_pitch" ctrlrange="-2.2 2.2" kp="500" kv="30"/>
+        <position name="act_l_ankle" joint="left_ankle_pitch" ctrlrange="-1.5 1.5" kp="500" kv="30"/>
+
+        <position name="act_r_hip" joint="right_hip_pitch" ctrlrange="-1.8 1.8" kp="500" kv="30"/>
+        <position name="act_r_knee" joint="right_knee_pitch" ctrlrange="-2.2 2.2" kp="500" kv="30"/>
+        <position name="act_r_ankle" joint="right_ankle_pitch" ctrlrange="-1.5 1.5" kp="500" kv="30"/>
+
+        <!-- 날개 회전축: Z축 수평 회전 -->
+        <position name="act_l_fold" joint="left_wing_fold" ctrlrange="-0.2 1.8" kp="150" kv="10"/>
+        <position name="act_r_fold" joint="right_wing_fold" ctrlrange="-1.8 0.2" kp="150" kv="10"/>
+
+        <!-- 틸트 로터 서보: 세로 접힘(1.57rad) ~ 수평 전개(0rad) -->
+        <position name="act_l_tilt" joint="left_tilt" ctrlrange="-0.5 2.0" kp="180" kv="12"/>
+        <position name="act_r_tilt" joint="right_tilt" ctrlrange="-0.5 2.0" kp="180" kv="12"/>
+
+        <!-- 🐦 머리/목 피치 서보: 몸통/날개는 수평 유지, 머리(두 눈+부리)가 아래로 55° 쏙 숙여짐! -->
+        <position name="act_neck" joint="neck_pitch" ctrlrange="-1.4 0.3" kp="150" kv="10"/>
+    </actuator>
+</mujoco>
