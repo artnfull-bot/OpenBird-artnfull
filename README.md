@@ -13,8 +13,8 @@
 2. **🪽 Vertical Stowed & Deployed Duct Wings**
    - Folded vertically behind the back during walking, deployed horizontally (180°) for VTOL flight.
    - Smooth 4-stage flight FSM: Stand $\rightarrow$ Spool $\rightarrow$ Climb $\rightarrow$ Altitude Hold & Hover.
-3. **🦅 Look-Down Survey Head Pitch**
-   - Independent neck/head pitch control (`neck_pitch`) for ground observation without disturbing horizontal wing leveling.
+3. **🦅 Look-Down Eye-Gaze & Beak Pitch**
+   - Independent eye-gaze and beak pitch control (`neck_pitch`) to look down 55° for ground observation while keeping wings perfectly horizontal.
 4. **📷 Stereo Eye Cameras & FPV View**
    - Dual eye cameras (`left_eye_cam`, `right_eye_cam`) and center FPV camera (`head_fpv_cam`).
 5. **🧠 Autonomous Simulation Brain**
@@ -33,7 +33,7 @@
 | `SPACE` | **Stop / Hover** | Stand still (Ground) / Precision Hover (Air) |
 | `1` $\rightarrow$ `2` $\rightarrow$ `3` | **Flight Sequence** | Deploy Wings $\rightarrow$ Takeoff / Hover $\rightarrow$ Land & Fold |
 | `C` | **Camera Switch** | 3rd-person Chase $\rightarrow$ Head FPV $\rightarrow$ Left Eye $\rightarrow$ Right Eye |
-| `V` / `B` | **Head Pitch** | Look down 55° (V) / Look forward (B) |
+| `V` / `B` | **Eye-Gaze Pitch** | Look down 55° (V) / Look forward (B) |
 | `G` / `Y` / `K` / `P` | **Gestures** | Peck (`G`), Crouch (`Y`), Knockdown (`K`), Auto-Right (`P`) |
 | `Q` / `ESC` | **Exit** | Close simulator |
 
