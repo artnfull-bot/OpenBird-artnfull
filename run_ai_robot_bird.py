@@ -18,25 +18,207 @@ from robot_bird.controller import RobotBirdFSM
 from robot_bird.ai_brain import RobotBirdAIBrain
 from robot_bird.recorder import ScreenRecorder
 
+class ShowcaseDirector:
+    """
+    🦅 대표님의 연출 스토리보드를 영화처럼 완벽하게 지휘하는 시네마틱 디렉터
+    
+    [시나리오 순서 - 리얼 1인칭 눈 시선 비행 & 바둑판 원점 복귀]
+    1. 🚶 앞으로 당당하게 걷기 (Forward Walk)
+    2. 🚶 조심조심 뒤로 걷기 (Backward Walk)
+    3. 💥 꽈당! 앞으로 넘어지기 (Knockdown)
+    4. 🔄 오뚝이 지능 발동! 스스로 벌떡 기립 (Self-Righting)
+    5. 🌾 바닥 모이 콕! 콕! 쪼아먹기 (Pecking)
+    6. 🦿 다리를 쏙 접고 쪼그려 앉았다가 일어서기 (Crouch & Stand)
+    
+    [🪽 극강의 리얼 시네마틱 비행 & 1인칭 눈 시선]
+    7. 🪽 날개 180° 수평 전개 + 3엽 프로펠러 가속 ➔ 1.0m 수직 이륙!
+    8. 🚀 [3인칭 전체 뷰] 날개를 펴고 앞으로 출발하는 멋진 전체 모습
+    9. 👁️ [1인칭 직접 눈 시점 1 - 전방 비행] 로봇새 눈으로 직접 앞을 바라보며 바람을 가르고 슝~ 날아가는 리얼한 비행 화면!
+    10. 👇 [1인칭 직접 눈 시점 2 - 하방 55° 관측] 날아가면서 머리를 55° 아래로 푹 숙여 바닥 체커보드를 직접 내려다보는 리얼한 스캔 화면!
+    11. 🔄 [3인칭 전체 뷰] 공중에서 180° 유턴하여 원래 출발했던 바둑판 정중앙(원점)으로 돌아오는 전체 모습!
+    12. 🕊️ [3인칭 정지 호버링] 원래 출발했던 바로 그 자리 상공에서 가만히 날고 있는 모습 (Hovering)
+    13. 🛬 [사뿐 하강 착지] 원래 출발했던 그 자리에 정확히 수직 착지 & 날개 등 뒤로 접기!
+    ➔ (이후 무한 반복!)
+    """
+    def __init__(self, controller, model, data):
+        self.c = controller
+        self.m = model
+        self.d = data
+        self.timeline = 0.0
+        self.step_idx = -1
+        self.home_x = 0.0
+        self.home_y = 0.0
+
+    def update(self, dt):
+        self.timeline += dt
+        t = self.timeline
+
+        # 1단계: 앞으로 걷기 (0.0s ~ 4.0s)
+        if t < 4.0:
+            if self.step_idx != 1:
+                self.step_idx = 1
+                self.home_x = self.d.qpos[0]
+                self.home_y = self.d.qpos[1]
+                self.c.cam_mode = 0 # 3인칭 전체 뷰
+                self.c.look_front()
+                self.c.wings_deployed = False
+                self.c.set_state(self.c.STATE_WALK)
+                print("\n[🎬 1단계] 🚶 [이족보행] 다리를 성큼성큼 번갈아 딛으며 앞으로 걷기")
+            self.c.walk_speed = 0.8
+            self.c.walk_turn = 0.0
+
+        # 2단계: 뒤로 걷기 (4.0s ~ 7.0s)
+        elif t < 7.0:
+            if self.step_idx != 2:
+                self.step_idx = 2
+                self.c.set_state(self.c.STATE_WALK)
+                print("\n[🎬 2단계] 🚶 [이족보행] 조심조심 뒤로 걷기 (원점 근처 유지)")
+            self.c.walk_speed = -0.8
+            self.c.walk_turn = 0.0
+
+        # 3단계: 넘어지기 (7.0s ~ 8.5s)
+        elif t < 8.5:
+            if self.step_idx != 3:
+                self.step_idx = 3
+                self.c.walk_speed = 0.0
+                self.d.qvel[0] = 0.35
+                self.d.qvel[3] = 4.5
+                self.d.qvel[4] = 2.0
+                self.c.set_state(self.c.STATE_KNOCKDOWN)
+                print("\n[🎬 3단계] 💥 꽈당! 균형을 잃고 앞으로 넘어지기 (Knockdown)")
+
+        # 4단계: 오뚝이처럼 다시 일어서기 (8.5s ~ 11.0s)
+        elif t < 11.0:
+            if self.step_idx != 4:
+                self.step_idx = 4
+                self.c.set_state(self.c.STATE_RECOVER)
+                print("\n[🎬 4단계] 🔄 오뚝이 지능 발동! 스스로 벌떡 일어서기 (Self-Righting)")
+
+        # 5단계: 모이 쪼기 (11.0s ~ 14.5s)
+        elif t < 14.5:
+            if self.step_idx != 5:
+                self.step_idx = 5
+                self.c.set_state(self.c.STATE_GROUND_PICK)
+                print("\n[🎬 5단계] 🌾 바닥 모이 콕! 콕! 쪼아먹기 (Pecking)")
+
+        # 6단계: 앉았다 일어서기 (14.5s ~ 18.5s)
+        elif t < 18.5:
+            if self.step_idx != 6:
+                self.step_idx = 6
+                self.c.set_state(self.c.STATE_SIT)
+                print("\n[🎬 6단계] 🦿 다리를 쏙 접고 쪼그려 앉았다가 일어서기 (Crouch & Stand)")
+            if t > 16.8 and self.c.state == self.c.STATE_SIT:
+                self.c.set_state(self.c.STATE_STAND)
+
+        # 7단계: 날개 180° 전개 & 공중 VTOL 수직 이륙 (18.5s ~ 22.5s)
+        elif t < 22.5:
+            if self.step_idx != 7:
+                self.step_idx = 7
+                self.home_x = self.d.qpos[0]
+                self.home_y = self.d.qpos[1]
+                self.c.target_yaw = 0.0
+                self.c.start_flight_sequence()
+                print("\n[🎬 7단계] 🪽 등 뒤 날개 180° 전개 + 프로펠러 가속 ➔ 1.0m 수직 이륙!")
+
+        # 8단계: 🚀 [3인칭 뷰] 앞으로 힘차게 출발하는 전체 모습 (22.5s ~ 25.5s)
+        elif t < 25.5:
+            if self.step_idx != 8:
+                self.step_idx = 8
+                self.c.look_front()
+                self.c.cam_mode = 0 # 3인칭 전체 뷰
+                print("\n[🎬 8단계] 🚀 [3인칭 전체 뷰] 날개를 펴고 앞으로 힘차게 출발하는 전체 모습")
+            self.c.target_y = self.home_y + 0.45
+
+        # 9단계: 👁️ [1인칭 직접 눈 시점 - 전방 비행] 로봇새 눈으로 직접 앞을 보며 슝~ 날아가는 리얼 속도감! (25.5s ~ 29.5s)
+        elif t < 29.5:
+            if self.step_idx != 9:
+                self.step_idx = 9
+                self.c.look_front()
+                self.c.cam_mode = 1 # 📷 [1인칭 FPV 직접 눈 시점]
+                print("\n" + "=" * 75)
+                print(" 👁️ [1인칭 눈 시선 화면 - 전방 비행] 로봇새 눈으로 직접 앞을 바라보며 슝~ 날아갑니다!")
+                print("=" * 75)
+            self.c.target_y = self.home_y + 0.95
+
+        # 10단계: 🕊️ [3인칭 전체 뷰 - 눈알/머리를 아래로 숙이는 모습] 비행 중 머리를 아래로 푹 숙이는 외형 연출! (29.5s ~ 33.0s)
+        elif t < 33.0:
+            if self.step_idx != 10:
+                self.step_idx = 10
+                self.c.cam_mode = 0 # 🌐 [3인칭 전체 뷰로 전환!]
+                self.c.target_look_down_pitch = 1.05 # 머리/눈알 아래 60° 깊게 숙이기
+                self.c.look_down = True
+                print("\n" + "=" * 75)
+                print(" 🕊️ [3인칭 전체 뷰] 비행 중인 로봇새가 머리(두 눈)를 아래로 푹 숙여 바닥을 내려다봅니다!")
+                print("=" * 75)
+            self.c.target_y = self.home_y + 1.15
+
+        # 11단계: 👇 [1인칭 직접 눈 시점 - 하방 60° 관측 화면] 숙인 눈으로 바닥 체커보드를 직접 내려다보는 리얼 시야! (33.0s ~ 37.5s)
+        elif t < 37.5:
+            if self.step_idx != 11:
+                self.step_idx = 11
+                self.c.target_look_down_pitch = 1.05
+                self.c.look_down = True
+                self.c.cam_mode = 1 # 📷 [1인칭 FPV 하방 시점 즉시 컷 전환!]
+                print("\n" + "=" * 75)
+                print(" 👇 [1인칭 눈 시선 화면 - 하방 60° 관측] 로봇새의 눈으로 직접 바닥 체커보드를 샅샅이 스캔합니다!")
+                print("=" * 75)
+            self.c.target_y = self.home_y + 1.25
+
+        # 12단계: 🔄 [1인칭 직접 눈 시점 - 180° 선회 유턴] 눈으로 세상을 둘러보며 원점 방향으로 유턴 (37.5s ~ 41.5s)
+        elif t < 41.5:
+            if self.step_idx != 12:
+                self.step_idx = 12
+                self.c.look_front() # 고개 정면 복귀
+                self.c.cam_mode = 1 # 1인칭 시점 유지하며 유턴
+                print("\n[🎬 12단계] 🔄 [1인칭 눈 시선 - 180° 유턴] 고개를 들고 180° 선회하여 출발했던 원점을 눈으로 포착!")
+            self.c.target_yaw = math.pi * min(1.0, (t - 37.5) / 3.5)
+
+        # 13단계: 🌐 [3인칭 전체 뷰 복귀] 180도 회전하여 원래 자리(원점)로 귀환하는 전체 모습 (41.5s ~ 46.0s)
+        elif t < 46.0:
+            if self.step_idx != 13:
+                self.step_idx = 13
+                self.c.look_front()
+                self.c.cam_mode = 0 # 3인칭 전체 뷰 복귀
+                self.c.target_yaw = 0.0 # 기체 정면 복귀
+                print("\n[🎬 13단계] 🌐 [3인칭 전체 뷰 복귀] 180° 선회를 마치고 바둑판 정중앙(원점)으로 완벽 귀환!")
+            self.c.target_x = self.home_x
+            self.c.target_y = self.home_y
+
+        # 14단계: 🕊️ [3인칭 정지 호버링] 원래 출발했던 그 자리 상공에서 가만히 호버링 (46.0s ~ 50.0s)
+        elif t < 50.0:
+            if self.step_idx != 14:
+                self.step_idx = 14
+                self.c.target_x = self.home_x
+                self.c.target_y = self.home_y
+                print("\n[🎬 14단계] 🕊️ [제자리 정지 호버링] 원래 출발했던 바로 그 자리 상공에서 피벗 안정화 호버링")
+
+        # 15단계: 🛬 [사뿐 하강 착지] 원래 출발했던 그 자리에 정확히 수직 착지 & 날개 접기 (50.0s ~ 56.0s)
+        elif t < 56.0:
+            if self.step_idx != 15:
+                self.step_idx = 15
+                self.c.set_state(self.c.STATE_LANDING)
+                print("\n[🎬 15단계] 🛬 [사뿐 하강 착지] 원래 출발했던 그 자리에 사뿐히 수직 착지 & 날개 등 뒤로 접기")
+            if t > 53.5 and self.c.wings_deployed:
+                self.c.wings_deployed = False # 날개 등 뒤로 쏙 접기
+
+        # 시나리오 완주 ➔ 처음부터 무한 반복!
+        else:
+            print("\n" + "★" * 75)
+            print("🎉 [스토리 완주] 3인칭 머리 숙임 ➔ 1인칭 하방 시선 ➔ 원점 복귀 풀 스토리보드 완주! 다시 무한 반복합니다.")
+            print("★" * 75 + "\n")
+            self.timeline = 0.0
+            self.step_idx = -1
+
 def print_ai_banner():
     print("=" * 80)
-    print("      🧠 [반려 로봇새 (Bipedal VTOL Robot Bird)] AI 자율 지능 두뇌 모드")
+    print("      🎬 [반려 로봇새 (OpenBird-artnfull)] 공식 시네마틱 스토리보드 데모")
     print("=" * 80)
-    print(" 🌟 로봇새가 스스로 호기심, 감정, 에너지 상태를 바탕으로 자율 행동을 결정합니다:")
-    print("   1. 🌾 모이 쪼기     : 바닥의 먹이를 발견하고 다리를 접어 콕! 콕! 콕!")
-    print("   2. 🚶 아장아장 걷기 : 주변을 탐색하며 앞/뒤 걷기 및 방향 전환")
-    print("   3. 🪽 자율 비행     : 날개를 쫙 펴고 1.0m 이륙하여 공중 순항 비행")
-    print("   4. 🛬 사뿐 착륙     : 안전하게 지상에 착지 후 쪼그려 앉아 휴식")
-    print("   5. 🔄 자율 오뚝이   : 외부 충격으로 넘어지면 스스로 감지하여 100% 벌떡 기립!")
-    print("   ─────────────────────────────────────────────────────────────")
-    print(" 💡 [사용자 수동 개입 & 편의 기능]")
-    print("   - [ C ] 키 : 📷 카메라 시점 전환 (3인칭 ➔ 전방 FPV ➔ 좌측 눈 ➔ 우측 눈)")
-    print("   - [ V / B ] 키 : 👀 눈알 시선 조작 (👇 눈알 아래 55° 보기(V) 🔁 다시 눈알 원래 위치로 복귀(V/B))")
-    print("   - [ X ] 키 : 🔴 실시간 화면 표준 H.264 MP4 동영상 녹화 ON / OFF")
-    print("   - [ K ] 키 : 💥 로봇새 꽈당 넘어뜨리기 (AI가 스스로 판단해서 일어남)")
-    print("   - [ Q / ESC ] : 시뮬레이터 종료")
-    print("=" * 80)
-    print("\nAI 로봇새 시뮬레이터를 시작합니다... (로봇새의 귀여운 자율 행동을 관찰해보세요!)\n")
+    print(" 🌟 대표님께서 직접 기획하신 13단계 풀 스토리보드가 펼쳐집니다:")
+    print("   1. 앞으로 걷기 ➔ 2. 뒤로 걷기 ➔ 3. 꽈당 넘어지기 ➔ 4. 오뚝이 벌떡 기립!")
+    print("   5. 모이 쪼기 ➔ 6. 앉았다 일어서기 ➔ 7. 날개 180° 전개 & VTOL 수직 이륙")
+    print("   8. 전진 비행 ➔ 9. 눈 아래 55° 향하기 ➔ 10. 직접 앞을 보는 1인칭 FPV")
+    print("   11. 직접 아래를 보는 1인칭 FPV ➔ 12. 3인칭 전체화면 복귀 ➔ 13. 사뿐 착지 & 날개 접기")
+    print("=" * 80 + "\n")
 
 def main():
     print_ai_banner()
@@ -75,7 +257,7 @@ def main():
 
     controller = RobotBirdFSM(model, data)
     controller.cam_mode = 0
-    ai_brain = RobotBirdAIBrain(controller)
+    director = ShowcaseDirector(controller, model, data)
     recorder = ScreenRecorder(model, data)
 
     def viewer_key_callback(keycode):
@@ -108,17 +290,17 @@ def main():
 
     with mujoco.viewer.launch_passive(model, data, key_callback=viewer_key_callback, show_left_ui=False, show_right_ui=False) as viewer:
         try:
-            viewer.cam.distance = 1.6
-            viewer.cam.elevation = -15
-            viewer.cam.azimuth = 145
+            viewer.cam.distance = 1.05
+            viewer.cam.elevation = -10
+            viewer.cam.azimuth = -80
 
             dt = model.opt.timestep if model.opt.timestep > 0 else 0.002
 
             while viewer.is_running():
                 step_start = time.time()
 
-                # 🧠 AI 자율 두뇌 업데이트
-                ai_brain.update(dt)
+                # 🎬 대표님의 스토리보드 디렉터 구동
+                director.update(dt)
 
                 # 🦆 물리 제어기 업데이트 및 물리 스텝 전진
                 controller.update(dt)
