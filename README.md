@@ -9,7 +9,7 @@
 > *True Digitigrade Bipedal Locomotion + 180° Foldable Duct Wing VTOL Flight Simulation (MuJoCo & Python)*
 
 <div align="center">
-  <video src="https://huggingface.co/artnfull/OpenBird-artnfull/resolve/main/replay.mp4" controls autoplay loop muted playsinline width="100%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);"></video>
+  <img src="preview.gif" alt="OpenBird-artnfull 15-Stage Simulation Showcase" width="100%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
 </div>
 
 ---
