@@ -75,7 +75,7 @@ Double-click the batch files to launch instantly:
 
 ---
 
-## ⚠️ Support Policy & Disclaimer (지원 정책 및 면책 공지)
+## ⚠️ Support Policy & Disclaimer
 
 - **Standalone Research Preview:** This project is provided on an **"AS-IS" basis** as a demonstration for the Physical AI & Robotics community.
 - **No Individual Technical Support:** The maintainers **do not provide 1-on-1 customer service, individual hardware consulting, or personal troubleshooting**.
