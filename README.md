@@ -72,3 +72,12 @@ Double-click the batch files to launch instantly:
 ## 📜 Licenses
 - **Software Code:** [Apache License 2.0](LICENSE)
 - **3D Models & Mechanical Designs:** [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 (CC BY-NC-SA 4.0)](LICENSE_DESIGN) (Commercial reproduction prohibited)
+
+---
+
+## ⚠️ Support Policy & Disclaimer (지원 정책 및 면책 공지)
+
+- **Standalone Research Preview:** This project is provided on an **"AS-IS" basis** as a demonstration for the Physical AI & Robotics community.
+- **No Individual Technical Support:** The maintainers **do not provide 1-on-1 customer service, individual hardware consulting, or personal troubleshooting**.
+- **Issue Tracker Guidelines:** The issue tracker is strictly reserved for critical bug reporting. Questions regarding basic Python setup or personal modifications will be closed without individual response.
+
