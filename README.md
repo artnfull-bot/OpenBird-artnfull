@@ -1,7 +1,8 @@
-# 🦅 OpenBird-artnfull (Avian-Inspired Bipedal VTOL Robot)
+# 🦅 open-bird-robot-mujoco-ppo (Avian-Inspired Bipedal VTOL Robot)
 
 [![Hugging Face Space](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-yellow.svg)](https://huggingface.co/spaces/artnfull/OpenBird-artnfull)
 [![Hugging Face Model](https://img.shields.io/badge/🤗%20Hugging%20Face-Models-orange.svg)](https://huggingface.co/artnfull/open-bird-robot-mujoco-ppo)
+[![GitHub Repository](https://img.shields.io/badge/GitHub-open--bird--robot--mujoco--ppo-blue?logo=github)](https://github.com/artnfull-bot/open-bird-robot-mujoco-ppo)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Design License: CC BY-NC-SA 4.0](https://img.shields.io/badge/Design-CC_BY--NC--SA_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
@@ -9,7 +10,7 @@
 > *True Digitigrade Bipedal Locomotion + 180° Foldable Duct Wing VTOL Flight Simulation (MuJoCo & Python)*
 
 <div align="center">
-  <img src="preview.gif" alt="OpenBird-artnfull 15-Stage Simulation Showcase" width="100%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
+  <img src="preview.gif" alt="open-bird-robot-mujoco-ppo 15-Stage Simulation Showcase" width="100%" style="border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.3);" />
 </div>
 
 ---
@@ -76,8 +77,8 @@
 
 ```bash
 # Clone repository
-git clone https://github.com/artnfull-bot/OpenBird-artnfull.git
-cd OpenBird-artnfull
+git clone https://github.com/artnfull-bot/open-bird-robot-mujoco-ppo.git
+cd open-bird-robot-mujoco-ppo
 
 # Install dependencies
 pip install mujoco numpy
@@ -97,7 +98,7 @@ pip install mujoco numpy
 ## 📁 Repository Structure
 
 ```text
-OpenBird-artnfull/
+open-bird-robot-mujoco-ppo/
 ├── robot_bird/
 │   ├── models/
 │   │   └── robot_bird.xml       # MuJoCo 3D physics model
@@ -134,9 +135,9 @@ OpenBird-artnfull/
 
 <br>
 
-### 🦅 반려 로봇새 (OpenBird-artnfull) 오픈소스 프로젝트 요약
+### 🦅 반려 로봇새 (open-bird-robot-mujoco-ppo) 오픈소스 프로젝트 요약
 
-**OpenBird-artnfull**은 조류(Avian)의 골격 구조와 비행 메커니즘에서 영감을 받은 **Physical AI 반려 로봇새 시뮬레이션 플랫폼**입니다.
+**open-bird-robot-mujoco-ppo**은 조류(Avian)의 골격 구조와 비행 메커니즘에서 영감을 받은 **Physical AI 반려 로봇새 시뮬레이션 플랫폼**입니다.
 
 - **핵심 기술**:
   1. **조류형 역관절 2족보행**: 6-DoF 관절을 통한 역동적인 전/후진 및 제자리 회전 보행.
