@@ -1,7 +1,7 @@
 # 🦅 OpenBird-artnfull (Avian-Inspired Bipedal VTOL Robot)
 
 [![Hugging Face Space](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-yellow.svg)](https://huggingface.co/spaces/artnfull/OpenBird-artnfull)
-[![Hugging Face Model](https://img.shields.io/badge/🤗%20Hugging%20Face-Models-orange.svg)](https://huggingface.co/artnfull/OpenBird-artnfull)
+[![Hugging Face Model](https://img.shields.io/badge/🤗%20Hugging%20Face-Models-orange.svg)](https://huggingface.co/artnfull/open-bird-robot-mujoco-ppo)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Design License: CC BY-NC-SA 4.0](https://img.shields.io/badge/Design-CC_BY--NC--SA_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 
